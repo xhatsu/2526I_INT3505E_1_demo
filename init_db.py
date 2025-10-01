@@ -38,17 +38,16 @@ CREATE TABLE borrow_records (
 """)
 
 cursor.execute("INSERT INTO books (title, author, quantity) VALUES (?, ?, ?)", 
-               ('Lão Hạc', 'Nam Cao', 5))
+               ('Book1', 'Author1', 5))
 cursor.execute("INSERT INTO books (title, author, quantity) VALUES (?, ?, ?)",
-               ('Số Đỏ', 'Vũ Trọng Phụng', 3))
+               ('Book2', 'Author2', 3))
 cursor.execute("INSERT INTO books (title, author, quantity) VALUES (?, ?, ?)",
-               ('Dế Mèn Phiêu Lưu Ký', 'Tô Hoài', 10))
+               ('Book3', 'Author3', 10))
 
-cursor.execute("INSERT INTO users (name) VALUES (?)", ('Nguyễn Văn A',))
-cursor.execute("INSERT INTO users (name) VALUES (?)", ('Trần Thị B',))
+cursor.execute("INSERT INTO users (name) VALUES (?)", ('User Name One',))
+cursor.execute("INSERT INTO users (name) VALUES (?)", ('Two User Name',))
 
 
-# Lưu thay đổi và đóng kết nối
 connection.commit()
 connection.close()
 
