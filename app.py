@@ -1,4 +1,4 @@
-# app.py
+
 import sqlite3
 from flask import Flask, request, jsonify
 from datetime import datetime
@@ -10,11 +10,8 @@ app = Flask(__name__)
 def get_db_connection():
     """Tạo kết nối đến database"""
     conn = sqlite3.connect(DATABASE)
-    # Trả về các hàng dưới dạng dictionary, tiện lợi hơn tuple
     conn.row_factory = sqlite3.Row
     return conn
-
-# === API Endpoints cho Quản lý Sách (CRUD) ===
 
 @app.route('/books', methods=['GET'])
 def get_all_books():
@@ -22,7 +19,6 @@ def get_all_books():
     conn = get_db_connection()
     books = conn.execute('SELECT * FROM books').fetchall()
     conn.close()
-    # Chuyển đổi list các đối tượng Row thành list các dictionary
     return jsonify([dict(row) for row in books])
 
 @app.route('/books/<int:book_id>', methods=['GET'])
@@ -57,10 +53,8 @@ def add_book():
     new_book = {"id": new_book_id, "title": title, "author": author, "quantity": quantity}
     return jsonify(new_book), 201
 
-# Các endpoint PUT và DELETE tương tự, bạn có thể tự mình xây dựng
-# dựa trên các ví dụ trên để luyện tập thêm.
 
-# === API Endpoints cho Mượn và Trả Sách ===
+# === API Endpoints ===
 
 @app.route('/borrow', methods=['POST'])
 def borrow_book():
@@ -73,7 +67,6 @@ def borrow_book():
     book_id = data['book_id']
 
     conn = get_db_connection()
-    # Lấy thông tin sách và kiểm tra số lượng
     book = conn.execute('SELECT * FROM books WHERE id = ?', (book_id,)).fetchone()
     if book is None:
         conn.close()
@@ -82,16 +75,13 @@ def borrow_book():
         conn.close()
         return jsonify({"error": "Book is out of stock"}), 400
 
-    # Bắt đầu một transaction
     try:
-        # Giảm số lượng sách
         conn.execute('UPDATE books SET quantity = quantity - 1 WHERE id = ?', (book_id,))
-        # Ghi nhận lịch sử mượn
         conn.execute('INSERT INTO borrow_records (user_id, book_id, borrow_date) VALUES (?, ?, ?)',
                      (user_id, book_id, datetime.now().isoformat()))
         conn.commit()
     except sqlite3.Error as e:
-        conn.rollback() # Hoàn tác nếu có lỗi
+        conn.rollback()
         return jsonify({"error": f"Database error: {e}"}), 500
     finally:
         conn.close()
@@ -109,7 +99,6 @@ def return_book():
     book_id = data['book_id']
 
     conn = get_db_connection()
-    # Tìm bản ghi mượn sách chưa trả
     record = conn.execute('SELECT * FROM borrow_records WHERE user_id = ? AND book_id = ? AND return_date IS NULL',
                           (user_id, book_id)).fetchone()
                           
@@ -119,11 +108,8 @@ def return_book():
     
     book_title = conn.execute('SELECT title FROM books WHERE id = ?', (book_id,)).fetchone()['title']
 
-    # Bắt đầu transaction
     try:
-        # Tăng lại số lượng sách
         conn.execute('UPDATE books SET quantity = quantity + 1 WHERE id = ?', (book_id,))
-        # Cập nhật lịch sử trả sách
         conn.execute('UPDATE borrow_records SET return_date = ? WHERE id = ?',
                      (datetime.now().isoformat(), record['id']))
         conn.commit()
@@ -143,6 +129,5 @@ def get_borrow_history():
     conn.close()
     return jsonify([dict(row) for row in records])
 
-# Chạy ứng dụng
 if __name__ == '__main__':
     app.run(debug=True)
