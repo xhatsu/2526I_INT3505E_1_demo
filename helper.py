@@ -16,3 +16,65 @@ def rows_to_dicts(cursor):
     # Column names need to be lowercase for consistent JSON keys
     columns = [col[0].lower() for col in cursor.description]
     return [dict(zip(columns, row)) for row in cursor]
+
+# --- HATEOAS Link Generation Helpers ---
+
+def add_user_links(user):
+    """Injects HATEOAS links into a user resource."""
+    user['_links'] = {
+        'self': {
+            'href': url_for('get_user_by_id', user_id=user['id'], _external=True),
+            'method': 'GET'
+        },
+        'history': {
+            'href': url_for('get_user_borrow_history', user_id=user['id'], _external=True),
+            'method': 'GET'
+        },
+        'collection': {
+             'href': url_for('get_all_users', _external=True),
+             'method': 'GET'
+        }
+    }
+    return user
+
+def add_book_links(book):
+    """Injects HATEOAS links into a book resource."""
+    book['_links'] = {
+        'self': {
+            'href': url_for('get_book_by_id', book_id=book['id'], _external=True),
+            'method': 'GET'
+        },
+        'collection': {
+             'href': url_for('get_all_books', _external=True),
+             'method': 'GET'
+        }
+    }
+    # Conditionally add the 'borrow' action link if the book is in stock
+    if book.get('quantity', 0) > 0:
+        book['_links']['borrow'] = {
+            'href': url_for('borrow_book', _external=True),
+            'method': 'POST',
+            'schema': {'user_id': 'integer', 'book_id': 'integer'}
+        }
+    return book
+
+def add_borrow_record_links(record):
+    """Injects HATEOAS links into a borrow record resource."""
+    record['_links'] = {
+        'user': {
+            'href': url_for('get_user_by_id', user_id=record['user_id'], _external=True),
+            'method': 'GET'
+        },
+        'book': {
+            'href': url_for('get_book_by_id', book_id=record['book_id'], _external=True),
+            'method': 'GET'
+        }
+    }
+    # If the book hasn't been returned, provide the link to the 'return' action
+    if record.get('return_date') is None:
+        record['_links']['return'] = {
+            'href': url_for('return_book', _external=True),
+            'method': 'POST',
+            'schema': {'user_id': 'integer', 'book_id': 'integer'}
+        }
+    return record

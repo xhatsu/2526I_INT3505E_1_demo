@@ -57,6 +57,9 @@ def get_all_users():
     with db.cursor() as cursor:
         cursor.execute('SELECT * FROM users ORDER BY name')
         users = rows_to_dicts(cursor)
+
+    users = [add_user_links(user) for user in users]
+
     return create_response(users, 200)
 
 
@@ -69,6 +72,9 @@ def get_user_by_id(user_id):
         user = rows_to_dicts(cursor)
     if not user:
         return create_response({"error": "User not found"}, 404)
+
+    user = add_user_links(user_list[0])
+
     return create_response(user[0], 200)
 
 
@@ -149,6 +155,9 @@ def get_all_books():
         cursor.execute('SELECT * FROM books ORDER BY title')
         books = rows_to_dicts(cursor)
     header = {'Cache-Control': 'public, max-age=300'}
+
+    books = [add_book_links(book) for book in books]
+
     return create_response(books, 200, header)
 
 
@@ -158,11 +167,14 @@ def get_book_by_id(book_id):
     db = get_db()
     with db.cursor() as cursor:
         cursor.execute('SELECT * FROM books WHERE id = :1', (book_id,))
-        book = rows_to_dicts(cursor)
-    if not book:
+        book_list = rows_to_dicts(cursor)
+    if not book_list:
         return create_response({"error": "Book not found"}, 404)
     header = {'Cache-Control': 'public, max-age=300'}
-    return create_response(book[0], 200, header)
+
+    book = add_book_links(book_list[0])
+
+    return create_response(book, 200, header)
 
 
 @app.route('/books', methods=['POST'])
@@ -347,6 +359,9 @@ def get_borrow_history():
     with db.cursor() as cursor:
         cursor.execute(query)
         records = rows_to_dicts(cursor)
+
+    records = [add_borrow_record_links(rec) for rec in records]
+
     return create_response(records, 200)
 
 
@@ -376,6 +391,9 @@ def get_user_borrow_history(user_id):
     with db.cursor() as cursor:
         cursor.execute(query, (user_id,))
         records = rows_to_dicts(cursor)
+
+    records = [add_borrow_record_links(rec) for rec in records]
+
     return create_response(records, 200)
 
 
