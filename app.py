@@ -1,7 +1,8 @@
 import oracledb
 import os
+import hashlib
 from dotenv import load_dotenv
-from flask import Flask, request, g, jsonify
+from flask import Flask, request, g, jsonify, Responses
 from datetime import datetime
 from functools import wraps
 from helper import *
@@ -121,7 +122,7 @@ def login():
             app.config['SECRET_KEY'],
             algorithm='HS256'
         )
-        return create_response({'token': token})
+        return create_response({'token': token}, 200,)
 
     return create_response({"message": "Authentication failed"}, 401)
 
@@ -147,12 +148,22 @@ def get_user_by_id(user_id):
     with db.cursor() as cursor:
         cursor.execute('SELECT * FROM users WHERE id = :1', (user_id,))
         user = rows_to_dicts(cursor)
+
     if not user:
         return create_response({"error": "User not found"}, 404)
 
+    # Check if client's ETag matches the current one
+    if request.headers.get('If-None-Match') == etag:
+        return Response(status=304) # Resource is not modified
+
     user = add_user_links(user_list[0])
 
-    return create_response(user[0], 200)
+    user_json_str = json.dumps(user, sort_keys=True).encode('utf-8')
+    etag = hashlib.sha1(user_json_str).hexdigest()
+
+    headers = {'ETag': etag}
+
+    return create_response(user[0], 200, headers)
 
 
 @app.route('/users', methods=['POST'])
@@ -231,6 +242,8 @@ def get_all_books():
     with db.cursor() as cursor:
         cursor.execute('SELECT * FROM books ORDER BY title')
         books = rows_to_dicts(cursor)
+    
+    # Caching for 5 minutes
     header = {'Cache-Control': 'public, max-age=300'}
 
     books = [add_book_links(book) for book in books]
@@ -247,11 +260,22 @@ def get_book_by_id(book_id):
         book_list = rows_to_dicts(cursor)
     if not book_list:
         return create_response({"error": "Book not found"}, 404)
-    header = {'Cache-Control': 'public, max-age=300'}
+    
+    # Check if client's ETag matches the current one
+    if request.headers.get('If-None-Match') == etag:
+        return Response(status=304) # Resource is not modified
 
     book = add_book_links(book_list[0])
 
-    return create_response(book, 200, header)
+    # Generate ETag from a stable JSON representation of the book data
+    book_json_str = json.dumps(book, sort_keys=True).encode('utf-8')
+    etag = hashlib.sha1(book_json_str).hexdigest()
+
+    headers = {
+        'ETag': etag
+    }
+
+    return create_response(book, 200, headers)
 
 
 @app.route('/books', methods=['POST'])
