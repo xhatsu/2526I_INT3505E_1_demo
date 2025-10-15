@@ -3,10 +3,9 @@ import sys
 
 # --- Database Credentials ---
 # IMPORTANT: Replace with your actual credentials and connect string.
-DB_USER = "ADMIN"
-DB_PASSWORD = "Isekai1012005"
-CONNECT_STRING = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-singapore-1.oraclecloud.com))(connect_data=(service_name=g4e0da5e96784db_dt6psk6oit42okbb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))'
-
+DB_USER = ".env"
+DB_PASSWORD = ".env"
+CONNECT_STRING = ".env" 
 
 def initialize_database():
     """

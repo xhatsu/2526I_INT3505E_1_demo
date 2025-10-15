@@ -1,19 +1,28 @@
 import oracledb
+import os
+from dotenv import load_dotenv
 from flask import Flask, request, g, jsonify
 from datetime import datetime
 from functools import wraps
 from helper import *
+import jwt
+from werkzeug.security import generate_password_hash, check_password_hash
 
+load_dotenv()
 # --- Configuration ---
-# It's recommended to use environment variables for credentials in production
-DB_USER = "ADMIN"
-DB_PASSWORD = "Isekai1012005"
-CONNECT_STRING = "(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-singapore-1.oraclecloud.com))(connect_data=(service_name=g4e0da5e96784db_dt6psk6oit42okbb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+CONNECT_STRING = os.getenv("CONNECT_STRING")
+
+if not DB_USER or not DB_PASSWORD or not CONNECT_STRING:
+    raise RuntimeError("Database configuration environment variables are not set.")
 
 app = Flask(__name__)
 
-
-
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise RuntimeError("SECRET_KEY environment variable is not set.")
 
 # --- Connection Pool Setup ---
 try:
@@ -47,6 +56,74 @@ def close_db(e=None):
     if db is not None:
         db.close()  # returns to pool, not truly closed
 
+
+# --- Authentication Endpoints ---
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Registers a new user."""
+    data = request.get_json()
+    if not data or not all(k in data for k in ('name', 'email', 'password')):
+        return create_response({"error": "Missing name, email, or password"}, 400)
+
+    name = data['name']
+    email = data['email']
+    # Hash the password for security
+    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
+
+    db = get_db()
+    try:
+        with db.cursor() as cursor:
+            cursor.execute(
+                'INSERT INTO users (name, email, password_hash) VALUES (:1, :2, :3)',
+                (name, email, hashed_password)
+            )
+            db.commit()
+    except oracledb.IntegrityError:
+        db.rollback()
+        return create_response({"error": "Email address already exists"}, 409)
+    except oracledb.Error as e:
+        db.rollback()
+        return create_response({"error": f"Database error: {e}"}, 500)
+
+    return create_response({"message": "User registered successfully"}, 201)
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    """Logs in a user and returns a JWT."""
+    data = request.get_json()
+    if not data or not all(k in data for k in ('email', 'password')):
+        return create_response({"error": "Missing email or password"}, 400)
+
+    email = data['email']
+    password = data['password']
+    db = get_db()
+
+    with db.cursor() as cursor:
+        cursor.execute('SELECT id, password_hash FROM users WHERE email = :1', (email,))
+        user_list = rows_to_dicts(cursor)
+
+    if not user_list:
+        return create_response({"message": "Authentication failed"}, 401)
+    
+    user = user_list[0]
+
+    if check_password_hash(user['password_hash'], password):
+        # Password is correct, generate JWT
+        payload = {
+            'exp': datetime.utcnow() + timedelta(hours=24), # Expiration time
+            'iat': datetime.utcnow(), # Issued at time
+            'sub': user['id'] # Subject (the user's ID)
+        }
+        token = jwt.encode(
+            payload,
+            app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        return create_response({'token': token})
+
+    return create_response({"message": "Authentication failed"}, 401)
 
 # --- User Management Endpoints ---
 

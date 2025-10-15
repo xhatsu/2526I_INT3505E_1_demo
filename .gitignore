@@ -1,4 +1,8 @@
 .venv
+.env
 *.db
 test.sh
 /.idea
+deployment.yml
+service.yml
+Dockerfile
