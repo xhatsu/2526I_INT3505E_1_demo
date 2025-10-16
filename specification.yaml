@@ -1,0 +1,453 @@
+openapi: 3.0.3
+info:
+  title: Library Management API
+  description: A RESTful API for managing users, books, and borrowing records in a library system.
+  version: 1.0.0
+servers:
+  - url: http://152.69.214.109
+    description: Load balancer server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the user.
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        _links:
+          type: object
+          properties:
+            self:
+              type: string
+              example: "/users/1"
+            history:
+              type: string
+              example: "/users/1/history"
+    
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the book.
+          example: 101
+        title:
+          type: string
+          example: "The Lord of the Rings"
+        author:
+          type: string
+          example: "J.R.R. Tolkien"
+        quantity:
+          type: integer
+          description: Number of available copies.
+          example: 5
+        _links:
+          type: object
+          properties:
+            self:
+              type: string
+              example: "/books/101"
+
+    BorrowRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 501
+        user_id:
+          type: integer
+          example: 1
+        user_name:
+          type: string
+          example: "John Doe"
+        book_id:
+          type: integer
+          example: 101
+        book_title:
+          type: string
+          example: "The Lord of the Rings"
+        borrow_date:
+          type: string
+          format: date-time
+        return_date:
+          type: string
+          format: date-time
+          nullable: true
+        _links:
+          type: object
+          properties:
+            self:
+              type: string
+              example: "/users/1/history"
+            user:
+              type: string
+              example: "/users/1"
+            book:
+              type: string
+              example: "/books/101"
+              
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Resource not found"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+# Apply security globally to all paths, except where overridden
+security:
+  - bearerAuth: []
+
+# Paths and Operations
+paths:
+  /register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      security: [] # This endpoint is public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: "Jane Doe"
+                email:
+                  type: string
+                  format: email
+                  example: "jane.doe@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "strongpassword123"
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Missing required fields
+        '409':
+          description: Email address already exists
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Log in a user
+      security: [] # This endpoint is public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "jane.doe@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "strongpassword123"
+      responses:
+        '200':
+          description: Authentication successful, JWT returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Authentication failed
+          
+  /users:
+    get:
+      tags: [Users]
+      summary: Get all users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+                  
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get a user by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+    put:
+      tags: [Users]
+      summary: Update a user's name
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: "Jane Smith"
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted successfully
+        '404':
+          description: User not found
+
+  /users/{userId}/history:
+    get:
+      tags: [Users]
+      summary: Get a user's borrowing history
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of borrow records for the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BorrowRecord'
+        '404':
+          description: User not found
+
+  /books:
+    get:
+      tags: [Books]
+      summary: Get all books
+      responses:
+        '200':
+          description: A list of all books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+    post:
+      tags: [Books]
+      summary: Add a new book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, author, quantity]
+              properties:
+                title:
+                  type: string
+                  example: "Dune"
+                author:
+                  type: string
+                  example: "Frank Herbert"
+                quantity:
+                  type: integer
+                  example: 10
+      responses:
+        '201':
+          description: Book added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+
+  /books/{bookId}:
+    get:
+      tags: [Books]
+      summary: Get a book by ID
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Book details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Book not found
+          
+    put:
+      tags: [Books]
+      summary: Update a book's details
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                author:
+                  type: string
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Book updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Book not found
+
+    delete:
+      tags: [Books]
+      summary: Delete a book
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Book deleted successfully
+        '404':
+          description: Book not found
+          
+  /borrow:
+    post:
+      tags: [Library Operations]
+      summary: Borrow a book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, book_id]
+              properties:
+                user_id:
+                  type: integer
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Book borrowed successfully
+        '400':
+          description: Bad request (e.g., book out of stock)
+        '404':
+          description: User or book not found
+
+  /return:
+    post:
+      tags: [Library Operations]
+      summary: Return a book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, book_id]
+              properties:
+                user_id:
+                  type: integer
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Book returned successfully
+        '400':
+          description: No active borrow record found
+        '404':
+          description: User or book not found
+
+  /borrow/history:
+    get:
+      tags: [Library Operations]
+      summary: Get complete borrow history
+      responses:
+        '200':
+          description: A list of all borrow records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BorrowRecord'
