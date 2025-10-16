@@ -3,6 +3,6 @@
 *.db
 test.sh
 /.idea
-deployment.yml
-service.yml
-Dockerfile
+#deployment.yml
+#service.yml
+#Dockerfile

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-deployment
+spec:
+  replicas: 2 # Run 3 pods of your application for high availability
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-library-api
+        image: xhatsu101/flask-library-api:v1.2.2 # The image you just built
+        ports:
+        - containerPort: 5000 # The port your Gunicorn server is listening on
