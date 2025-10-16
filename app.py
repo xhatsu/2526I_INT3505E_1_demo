@@ -2,11 +2,12 @@ import oracledb
 import os
 import hashlib
 from dotenv import load_dotenv
-from flask import Flask, request, g, jsonify, Responses
-from datetime import datetime
+from flask import Flask, request, g, jsonify, Response, url_for
+from datetime import datetime, timedelta
 from functools import wraps
 from helper import *
 import jwt
+import json
 from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
@@ -80,9 +81,9 @@ def register():
                 (name, email, hashed_password)
             )
             db.commit()
-    except oracledb.IntegrityError:
+    except oracledb.IntegrityError as e:
         db.rollback()
-        return create_response({"error": "Email address already exists"}, 409)
+        return create_response({"error": f"Database Integrity Error: {e}"}, 409)
     except oracledb.Error as e:
         db.rollback()
         return create_response({"error": f"Database error: {e}"}, 500)
@@ -147,23 +148,28 @@ def get_user_by_id(user_id):
     db = get_db()
     with db.cursor() as cursor:
         cursor.execute('SELECT * FROM users WHERE id = :1', (user_id,))
-        user = rows_to_dicts(cursor)
+        user_list = rows_to_dicts(cursor)
+
+    if len(user_list) == 0:
+        return create_response({"error": "User not found"}, 404)
+    else: 
+        user = add_user_links(user_list[0])
 
     if not user:
         return create_response({"error": "User not found"}, 404)
+
+    user_json_str = json.dumps(user, sort_keys=True).encode('utf-8')
+    etag = hashlib.sha1(user_json_str).hexdigest()
 
     # Check if client's ETag matches the current one
     if request.headers.get('If-None-Match') == etag:
         return Response(status=304) # Resource is not modified
 
-    user = add_user_links(user_list[0])
-
-    user_json_str = json.dumps(user, sort_keys=True).encode('utf-8')
-    etag = hashlib.sha1(user_json_str).hexdigest()
+    
 
     headers = {'ETag': etag}
 
-    return create_response(user[0], 200, headers)
+    return create_response(user, 200, headers)
 
 
 @app.route('/users', methods=['POST'])
@@ -261,15 +267,17 @@ def get_book_by_id(book_id):
     if not book_list:
         return create_response({"error": "Book not found"}, 404)
     
-    # Check if client's ETag matches the current one
-    if request.headers.get('If-None-Match') == etag:
-        return Response(status=304) # Resource is not modified
+    
 
     book = add_book_links(book_list[0])
 
     # Generate ETag from a stable JSON representation of the book data
     book_json_str = json.dumps(book, sort_keys=True).encode('utf-8')
     etag = hashlib.sha1(book_json_str).hexdigest()
+
+    # Check if client's ETag matches the current one
+    if request.headers.get('If-None-Match') == etag:
+        return Response(status=304) # Resource is not modified
 
     headers = {
         'ETag': etag
@@ -481,6 +489,7 @@ def get_user_borrow_history(user_id):
         SELECT
             br.id,
             br.book_id,
+            br.user_id,
             b.title as book_title,
             br.borrow_date,
             br.return_date
@@ -492,6 +501,9 @@ def get_user_borrow_history(user_id):
     with db.cursor() as cursor:
         cursor.execute(query, (user_id,))
         records = rows_to_dicts(cursor)
+
+    if len(records) == 0:
+        return create_response({"message": "No borrow history found for this user"}, 200)
 
     records = [add_borrow_record_links(rec) for rec in records]
 
