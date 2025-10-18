@@ -1,13 +1,14 @@
 import oracledb
 import os
 import hashlib
+import jwt
+import json
 from dotenv import load_dotenv
 from flask import Flask, request, g, jsonify, Response, url_for
 from datetime import datetime, timedelta
 from functools import wraps
 from helper import *
-import jwt
-import json
+from math import ceil
 from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
@@ -132,14 +133,60 @@ def login():
 @app.route('/users', methods=['GET'])
 def get_all_users():
     """Fetches all users."""
+
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        if page < 1 or limit < 1:
+            raise ValueError    
+    except ValueError:
+        return create_response({"error": "Invalid 'page' or 'limit'. Must be positive integers."}, 400)
+
+    # 2. Calculate the offset for the SQL query
+    offset = (page - 1) * limit
+
     db = get_db()
-    with db.cursor() as cursor:
-        cursor.execute('SELECT * FROM users ORDER BY name')
-        users = rows_to_dicts(cursor)
+    try:
+        with db.cursor() as cursor:
+            # Get the total number of books to calculate total pages
+            cursor.execute('SELECT COUNT(*) FROM users')
+            total_items = cursor.fetchone()[0]
+            if total_items == 0:
+                return create_response({'data': [], 'total_items': 0}, 200)
 
-    users = [add_user_links(user) for user in users]
+            total_pages = ceil(total_items / limit)
 
-    return create_response(users, 200)
+            # 3. Fetch the requested page of books using OFFSET and FETCH
+            # SQL syntax for pagination
+            query = """
+                SELECT * FROM users 
+                ORDER BY id 
+                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+            """
+            cursor.execute(query, {'offset': offset, 'limit': limit})
+            users = rows_to_dicts(cursor)
+            users = [add_user_links(user) for user in users]
+    
+    
+        # 4. Build a response object that includes pagination metadata
+        response_data = {
+            'total_items': total_items,
+            'total_pages': total_pages,
+            'current_page': page,
+            'data': users
+        }
+
+        # Add HATEOAS links for next and previous pages
+        if page < total_pages:
+            response_data['next_page_url'] = url_for('get_all_users', page=page + 1, limit=limit, _external=True)
+        if page > 1:
+            response_data['prev_page_url'] = url_for('get_all_users', page=page - 1, limit=limit, _external=True)
+
+        header = {'Cache-Control': 'public, max-age=300'}
+
+        return create_response(response_data, 200, header)
+    except oracledb.Error as e:
+        return create_response({"error": f"Database error: {e}"}, 500)
 
 
 @app.route('/users/<int:user_id>', methods=['GET'])
@@ -243,18 +290,61 @@ def delete_user(user_id):
 
 @app.route('/books', methods=['GET'])
 def get_all_books():
-    """Fetches all books from the library."""
-    db = get_db()
-    with db.cursor() as cursor:
-        cursor.execute('SELECT * FROM books ORDER BY title')
-        books = rows_to_dicts(cursor)
+    """Fetches a paginated list of all books from the library."""
     
-    # Caching for 5 minutes
-    header = {'Cache-Control': 'public, max-age=300'}
+    # 1. Get page and limit from query parameters, with default values
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        if page < 1 or limit < 1:
+            raise ValueError
+    except ValueError:
+        return create_response({"error": "Invalid 'page' or 'pageSize'. Must be positive integers."}, 400)
 
-    books = [add_book_links(book) for book in books]
+    # 2. Calculate the offset for the SQL query
+    offset = (page - 1) * limit
 
-    return create_response(books, 200, header)
+    db = get_db()
+    try:
+        with db.cursor() as cursor:
+            # Get the total number of books to calculate total pages
+            cursor.execute('SELECT COUNT(*) FROM books')
+            total_items = cursor.fetchone()[0]
+            if total_items == 0:
+                return create_response({'data': [], 'total_items': 0}, 200)
+
+            total_pages = ceil(total_items / limit)
+
+            # 3. Fetch the requested page of books using OFFSET and FETCH
+            # SQL syntax for pagination
+            query = """
+                SELECT * FROM books 
+                ORDER BY id 
+                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+            """
+            cursor.execute(query, {'offset': offset, 'limit': limit})
+            books = rows_to_dicts(cursor)
+            books = [add_book_links(book) for book in books]
+
+        # 4. Build a response object that includes pagination metadata
+        response_data = {
+            'total_items': total_items,
+            'total_pages': total_pages,
+            'current_page': page,
+            'data': books
+        }
+        
+        # Add HATEOAS links for next and previous pages
+        if page < total_pages:
+            response_data['next_page_url'] = url_for('get_all_books', page=page + 1, limit=limit, _external=True)
+        if page > 1:
+            response_data['prev_page_url'] = url_for('get_all_books', page=page - 1, limit=limit, _external=True)
+
+        header = {'Cache-Control': 'public, max-age=300'}
+        return create_response(response_data, 200, header)
+        
+    except oracledb.Error as e:
+        return create_response({"error": f"Database error: {e}"}, 500)
 
 
 @app.route('/books/<int:book_id>', methods=['GET'])
