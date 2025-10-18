@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: xhatsu101/flask-auth-gateway:v1.1 # Your image
+          image: xhatsu101/flask-auth-gateway:v1.2 # Your image
           ports:
             - containerPort: 5000
           env:

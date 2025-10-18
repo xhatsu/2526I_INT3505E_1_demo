@@ -117,7 +117,7 @@ def login():
         payload = {
             'exp': datetime.utcnow() + timedelta(hours=24), # Expiration time
             'iat': datetime.utcnow(), # Issued at time
-            'sub': user['id'] # Subject (the user's ID)
+            'sub': str(user['id']) # Subject (the user's ID)
         }
         token = jwt.encode(
             payload,

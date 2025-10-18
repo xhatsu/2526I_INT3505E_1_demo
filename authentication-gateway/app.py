@@ -24,20 +24,18 @@ def validate_jwt(auth_header):
     Returns True if valid, False otherwise.
     """
     if not auth_header or not auth_header.startswith("Bearer "):
-        return False
-
+        raise jwt.InvalidTokenError("Missing or malformed Authorization header")
     token = auth_header.split(" ")[1]
-    
     try:
         # Decode the token. This automatically checks the signature and expiration.
         jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         return True
     except jwt.ExpiredSignatureError:
         # Token has expired
-        return False
+        raise
     except jwt.InvalidTokenError:
         # Any other error (e.g., invalid signature, malformed token)
-        return False
+        raise
 
 # def is_token_valid(token):
 #     """
@@ -64,8 +62,13 @@ def gateway(path):
     else:
         # For all other routes, perform the JWT validation
         auth_header = request.headers.get('Authorization')
-        if not validate_jwt(auth_header):
-            return jsonify({"message": "Authentication failed or token is invalid/expired"}), 401
+        try:
+            if not validate_jwt(auth_header):
+                return jsonify({"message": "Authentication failed or token is not accepted"}), 401
+        except jwt.ExpiredSignatureError as e:
+                return jsonify({"message": f"{str(e)}"}), 401
+        except jwt.InvalidTokenError as e:
+                return jsonify({"message": f"Token invalid: {str(e)}"}), 401
 
     # Construct the full internal URL
     full_url = f"{FORWARD_URL}/{path}"
