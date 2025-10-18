@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-gateway-deployment
+spec:
+  replicas: 2 # Run at least two replicas for availability
+  selector:
+    matchLabels:
+      app: flask-gateway
+  template:
+    metadata:
+      labels:
+        app: flask-gateway
+    spec:
+      containers:
+        - name: gateway
+          image: xhatsu101/flask-auth-gateway:v1.1 # Your image
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FORWARD_URL
+              # This must match the name and port of your app's ClusterIP service
+              value: "http://10.0.0.235:32520"

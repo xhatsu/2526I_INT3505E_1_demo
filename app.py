@@ -3,7 +3,7 @@ import os
 import hashlib
 import jwt
 import json
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 from flask import Flask, request, g, jsonify, Response, url_for
 from datetime import datetime, timedelta
 from functools import wraps
