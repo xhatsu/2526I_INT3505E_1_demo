@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of your application's code
 COPY . .
+ENV PYTHONUNBUFFERED=1
 
 # Run the database initialization script
 #RUN python init_db.py
@@ -19,4 +20,4 @@ EXPOSE 5000
 
 # Run the app using Gunicorn
 # This is the key change for production!
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "run:app"]
