@@ -38,11 +38,17 @@ def create_app(test_config=None):
     from . import books
     # All routes in books.py will be prefixed with /api/v1/books
     app.register_blueprint(books.bp, url_prefix='/api/v1/books')
+    from . import books_v2
+    # All routes in books_v2.py will be prefixed with /api/v2/books
+    app.register_blueprint(books_v2.bp, url_prefix='/api/v2/books')
 
     # Library Blueprint (for /borrow, /return, ...)
     from . import library
     # All routes in library.py will be prefixed with /api/v1
     app.register_blueprint(library.bp, url_prefix='/api/v1')
+    from . import library_v2
+    # All routes in library_v2.py will be prefixed with /api/v2
+    app.register_blueprint(library_v2.bp, url_prefix='/api/v2')
 
     @app.route('/health')
     def health_check():
