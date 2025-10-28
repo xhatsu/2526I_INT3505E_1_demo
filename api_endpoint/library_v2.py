@@ -90,23 +90,75 @@ def return_book():
 
 @bp.route('/borrow/history', methods=['GET'])
 def get_borrow_history():
-    """Retrieves the complete history of all borrow records."""
+    """
+    Retrieves the complete history of all borrow records.
+    Optionally includes full book details via ?include=book query parameter.
+    """
     db = get_db()
-    query = """
+    
+    # Check for the '?include=book' query parameter
+    include_book_details = request.args.get('include') == 'book'
+
+    # Base fields to select
+    query_fields = [
+        "br.id", "br.user_id", "u.name as user_name",
+        "br.borrow_date", "br.return_date"
+    ]
+
+    if include_book_details:
+        # If full book details are requested, select all relevant book fields
+        query_fields.extend([
+            "b.id as book_id", 
+            "b.title as book_title",
+            "b.author as book_author",
+            "b.quantity as book_quantity"
+        ])
+    else:
+        query_fields.extend([
+            "br.book_id as book_id", 
+        ])
+
+    # Dynamically build the SELECT statement
+    query = f"""
         SELECT
-            br.id, br.user_id, u.name as user_name,
-            br.book_id, b.title as book_title,
-            br.borrow_date, br.return_date
+            {', '.join(query_fields)}
         FROM borrow_records br
         JOIN books b ON br.book_id = b.id
         JOIN users u ON br.user_id = u.id
         ORDER BY br.borrow_date DESC
     """
+    
     with db.cursor() as cursor:
         cursor.execute(query)
         records = rows_to_dicts(cursor)
     
-    # This helper MUST be updated. See notes below.
+    # Post-processing: If details were requested, nest them into a 'book' object
+    if include_book_details:
+        processed_records = []
+        for rec in records:
+            # Create a nested 'book' object
+            book_data = {
+                'id': rec.pop('book_id'),
+                'title': rec.pop('book_title'),
+                'author': rec.pop('book_author'),
+                'quantity': rec.pop('book_quantity'),
+            }
+            rec['book'] = book_data  # Add the nested object to the record
+            processed_records.append(rec)
+        records = processed_records
+    else:
+        processed_records = []
+        for rec in records:
+            # Create a nested 'book' object
+            book_data = {
+                'id': rec.pop('book_id'),
+            }
+            rec['book'] = book_data  # Add the nested object to the record
+            processed_records.append(rec)
+        records = processed_records
+
+        
+
     records = [add_borrow_record_links(rec) for rec in records]
 
     return create_response(records, 200)

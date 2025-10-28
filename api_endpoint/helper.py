@@ -66,7 +66,7 @@ def add_borrow_record_links(record):
             'method': 'GET'
         },
         'book': {
-            'href': url_for('books.get_book_by_id', book_id=record['book_id'], _external=True),
+            'href': url_for('books.get_book_by_id', book_id=record['book']['id'], _external=True),
             'method': 'GET'
         }
     }
