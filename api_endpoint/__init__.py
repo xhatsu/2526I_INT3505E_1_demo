@@ -1,6 +1,7 @@
 # project/__init__.py
 import os
 from flask import Flask
+from .db import get_db
 
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
@@ -53,6 +54,7 @@ def create_app(test_config=None):
     @app.route('/health')
     def health_check():
         """A simple health check endpoint."""
+        db = get_db()
         return {"status": "ok"}, 200
 
     return app
