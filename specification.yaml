@@ -1,98 +1,130 @@
-# OpenAPI Specification v3.0.3
 openapi: 3.0.3
 info:
-  title: "Library API"
-  description: "API for managing a library of users, books, and borrow records. Protected by an API Gateway with JWT authentication."
+  title: Library API
+  description: >
+    OpenAPI 3.0 specification for the demo Flask library API.
+    Includes endpoints in api/v1 and api/v2 (books, library), user management,
+    auth (register/login), and health check based on the repository code.
   version: "1.0.0"
-
-# The server URL should be your API Gateway's root.
 servers:
   - url: http://localhost:5000
-    description: "Local development server (Gateway)"
+    description: Local development server
 
-# 1. Define API-level tags for grouping endpoints
 tags:
-  - name: "Auth"
-    description: "User Registration and Login"
-  - name: "Books"
-    description: "Manage and search for books"
-  - name: "Users"
-    description: "Manage user accounts"
-  - name: "Library"
-    description: "Core library functions like borrow and return"
-  - name: "Health"
-    description: "Application health checks"
+  - name: Health
+    description: Health check endpoints
+  - name: Auth
+    description: Registration and login
+  - name: Users
+    description: User management and borrow history
+  - name: Books
+    description: Book catalog (v1)
+  - name: Books v2
+    description: Book catalog (v2) with filtering
+  - name: Library
+    description: Borrow / Return and borrow history (v1)
+  - name: Library v2
+    description: Borrow / Return and borrow history (v2 with include=book)
 
-# 2. Define reusable components (Schemas, Security)
 components:
-  # --- Reusable Data Schemas ---
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
-    Book:
+    MessageResponse:
       type: object
       properties:
-        id:
-          type: integer
-          example: 1
-        title:
+        message:
           type: string
-          example: "Dune"
-        author:
+      example:
+        message: "User registered successfully"
+    ErrorResponse:
+      type: object
+      properties:
+        error:
           type: string
-          example: "Frank Herbert"
-        quantity:
-          type: integer
-          example: 5
-        _links:
-          type: object
-          properties:
-            self:
-              type: string
-              format: uri
-              example: "/api/v1/books/1"
+      example:
+        error: "Missing required fields: title, author, quantity"
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      example:
+        status: "ok"
 
     User:
       type: object
       properties:
         id:
           type: integer
-          example: 101
         name:
           type: string
-          example: "John Doe"
         email:
           type: string
-          format: email
-          example: "john@example.com"
         _links:
           type: object
-          properties:
-            self:
-              type: string
-              format: uri
-              example: "/api/v1/users/101"
-            history:
-              type: string
-              format: uri
-              example: "/api/v1/users/101/history"
+      required:
+        - id
+        - name
+      example:
+        id: 1
+        name: "Alice"
+        email: "alice@example.com"
+        _links:
+          self:
+            href: "http://localhost:5000/api/v1/users/1"
+            method: "GET"
 
-    BorrowRecord:
+    Book:
       type: object
       properties:
         id:
           type: integer
-          example: 50
+        title:
+          type: string
+        author:
+          type: string
+        quantity:
+          type: integer
+        _links:
+          type: object
+      required:
+        - id
+        - title
+        - author
+        - quantity
+      example:
+        id: 10
+        title: "The Example Book"
+        author: "Author Name"
+        quantity: 3
+        _links:
+          self:
+            href: "http://localhost:5000/api/v1/books/10"
+            method: "GET"
+          collection:
+            href: "http://localhost:5000/api/v1/books"
+            method: "GET"
+          borrow:
+            href: "http://localhost:5000/api/v1/borrow"
+            method: "POST"
+            schema:
+              user_id: "integer"
+              book_id: "integer"
+
+    BorrowRecordBase:
+      type: object
+      properties:
+        id:
+          type: integer
         user_id:
           type: integer
-          example: 101
         user_name:
           type: string
-          example: "John Doe"
-        book_id:
-          type: integer
-          example: 1
-        book_title:
-          type: string
-          example: "Dune"
         borrow_date:
           type: string
           format: date-time
@@ -100,17 +132,42 @@ components:
           type: string
           format: date-time
           nullable: true
-        _links:
-          type: object
+
+    BorrowRecord:
+      allOf:
+        - $ref: '#/components/schemas/BorrowRecordBase'
+        - type: object
           properties:
-            user:
-              type: string
-              format: uri
-              example: "/api/v1/users/101"
             book:
-              type: string
-              format: uri
-              example: "/api/v1/books/1"
+              type: object
+              nullable: true
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                author:
+                  type: string
+                quantity:
+                  type: integer
+      example:
+        id: 5
+        user_id: 1
+        user_name: "Alice"
+        borrow_date: "2025-01-01T12:00:00Z"
+        return_date: null
+        book:
+          id: 10
+          title: "The Example Book"
+          author: "Author Name"
+          quantity: 2
+        _links:
+          user:
+            href: "http://localhost:5000/api/v1/users/1"
+            method: "GET"
+          book:
+            href: "http://localhost:5000/api/v1/books/10"
+            method: "GET"
 
     PaginatedBooks:
       type: object
@@ -124,16 +181,14 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Book"
+            $ref: '#/components/schemas/Book'
         next_page_url:
           type: string
-          format: uri
           nullable: true
         prev_page_url:
           type: string
-          format: uri
           nullable: true
-          
+
     PaginatedUsers:
       type: object
       properties:
@@ -146,96 +201,80 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/User"
+            $ref: '#/components/schemas/User'
         next_page_url:
           type: string
-          format: uri
           nullable: true
         prev_page_url:
           type: string
-          format: uri
           nullable: true
 
-    Error:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Resource not found"
-        error:
-          type: string
-          example: "Detailed error description"
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number (1-based)
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+      description: Items per page (limit)
+    TitleFilter:
+      name: title
+      in: query
+      schema:
+        type: string
+      description: Filter by title (case-insensitive, partial match). v2 only.
+    AuthorFilter:
+      name: author
+      in: query
+      schema:
+        type: string
+      description: Filter by author (case-insensitive, partial match). v2 only.
+    IncludeParam:
+      name: include
+      in: query
+      schema:
+        type: string
+        enum: [book]
+      description: Use include=book to embed full book details in borrow history (v2)
 
-  # --- Reusable Responses ---
-  responses:
-    Unauthorized:
-      description: "Authentication failed. Token is missing, invalid, or expired."
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            message: "Token invalid: Signature verification failed"
-    NotFound:
-      description: "The requested resource was not found."
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            message: "Book not found"
-    BadRequest:
-      description: "Invalid request, such as missing required fields."
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-          example:
-            message: "Missing name, email, or password"
-
-  # --- Security Scheme (JWT) ---
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: "JWT Bearer token"
-
-# 3. Apply JWT security globally to ALL endpoints
-security:
-  - bearerAuth: []
-
-# 4. Define all API paths (endpoints)
 paths:
-  # --- Health Check (Public) ---
   /health:
     get:
       tags:
-        - "Health"
-      summary: "Check service health"
-      description: "Checks if the main application service is running."
-      security: [] # Override global security, make this public
+        - Health
+      summary: Health check
       responses:
-        "200":
-          description: "Service is healthy"
+        '200':
+          description: Service is healthy
           content:
             application/json:
-              example:
-                status: "ok"
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
 
-  # --- Auth (Public) ---
   /api/v1/register:
     post:
       tags:
-        - "Auth"
-      summary: "Register a new user"
-      security: [] # Override global security, make this public
+        - Auth
+      summary: Register a new user
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
+                - email
+                - password
               properties:
                 name:
                   type: string
@@ -246,25 +285,39 @@ paths:
                   type: string
                   format: password
       responses:
-        "201":
-          description: "User registered successfully"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "409":
-          description: "User with this email already exists"
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Database integrity error (duplicate)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/login:
     post:
       tags:
-        - "Auth"
-      summary: "Log in a user"
-      security: [] # Override global security, make this public
+        - Auth
+      summary: Log in and receive a JWT
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - email
+                - password
               properties:
                 email:
                   type: string
@@ -273,8 +326,8 @@ paths:
                   type: string
                   format: password
       responses:
-        "200":
-          description: "Login successful"
+        '200':
+          description: Authentication successful, returns token
           content:
             application/json:
               schema:
@@ -282,61 +335,236 @@ paths:
                 properties:
                   token:
                     type: string
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          description: "Authentication failed"
-
-  # --- Books (Protected) ---
-  /api/v1/books/: # Trailing slash matches your redirecting behavior
-    get:
-      tags:
-        - "Books"
-      summary: "List or search for books"
-      description: "Get a paginated list of books. Can be filtered by title and author."
-      parameters:
-        - name: title
-          in: query
-          description: "Filter by title (case-insensitive, partial match)"
-          schema:
-            type: string
-        - name: author
-          in: query
-          description: "Filter by author (case-insensitive, partial match)"
-          schema:
-            type: string
-        - name: page
-          in: query
-          description: "Page number for pagination"
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          description: "Items per page"
-          schema:
-            type: integer
-            default: 10
-      responses:
-        "200":
-          description: "A paginated list of books"
+                    description: JWT token
+        '400':
+          description: Missing email or password
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedBooks"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-          
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: "Authentication failed"
+
+  /api/v1/users:
+    get:
+      tags:
+        - Users
+      summary: Get paginated list of users
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: A paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+        '400':
+          description: Invalid paging parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
-        - "Books"
-      summary: "Add a new book"
+        - Users
+      summary: Add a new user (minimal endpoint)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Missing required field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{user_id}:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - Users
+      summary: Get single user by id
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Users
+      summary: Update a user's name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Missing required field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Integrity error (duplicate name)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Users
+      summary: Delete user by id
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{user_id}/history:
+    get:
+      tags:
+        - Users
+      summary: Get borrow history for a specific user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Borrow history list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BorrowRecord'
+        '201':
+          description: No borrow history found (returns message)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: "No borrow history found for this user"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/books:
+    get:
+      tags:
+        - Books
+      summary: Get paginated list of books (v1)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated book list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBooks'
+        '400':
+          description: Invalid paging parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Books
+      summary: Add a new book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - author
+                - quantity
               properties:
                 title:
                   type: string
@@ -345,16 +573,18 @@ paths:
                 quantity:
                   type: integer
       responses:
-        "201":
-          description: "Book created"
+        '201':
+          description: New book created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Book"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/books/{book_id}:
     parameters:
@@ -365,26 +595,29 @@ paths:
           type: integer
     get:
       tags:
-        - "Books"
-      summary: "Get book by ID"
+        - Books
+      summary: Get a book by id
       responses:
-        "200":
-          description: "Book details"
+        '200':
+          description: Book found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Book"
-        "304":
-          description: "Not Modified (ETag matches)"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/Book'
+        '304':
+          description: Not modified (ETag matched)
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       tags:
-        - "Books"
-      summary: "Update a book"
+        - Books
+      summary: Update a book
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -397,234 +630,367 @@ paths:
                 quantity:
                   type: integer
       responses:
-        "200":
-          description: "Book updated"
+        '200':
+          description: Updated book
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Book"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags:
-        - "Books"
-      summary: "Delete a book"
+        - Books
+      summary: Delete a book
       responses:
-        "200":
-          description: "Book deleted"
-          content:
-            application/json:
-              example:
-                message: "Book with id 1 has been deleted."
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  # --- Users (Protected) ---
-  /api/v1/users/: # Trailing slash matches your redirecting behavior
-    get:
-      tags:
-        - "Users"
-      summary: "List all users"
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10
-      responses:
-        "200":
-          description: "A paginated list of users"
+        '200':
+          description: Book deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedUsers"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v2/books:
+    get:
+      tags:
+        - Books v2
+      summary: Get paginated and filterable list of books (v2)
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/TitleFilter'
+        - $ref: '#/components/parameters/AuthorFilter'
+      responses:
+        '200':
+          description: Paginated, filtered books
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBooks'
+        '400':
+          description: Invalid params
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
-        - "Users"
-      summary: "Add a new user (admin)"
-      description: "Note: This is different from /register. This just creates a user with a name."
+        - Books v2
+      summary: Add a new book (v2)
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - title
+                - author
+                - quantity
               properties:
-                name:
+                title:
                   type: string
+                author:
+                  type: string
+                quantity:
+                  type: integer
       responses:
-        "201":
-          description: "User created"
+        '201':
+          description: New book created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "409":
-          description: "User with this name already exists"
-  
-  /api/v1/users/{user_id}:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v2/books/{book_id}:
     parameters:
-      - name: user_id
+      - name: book_id
         in: path
         required: true
         schema:
           type: integer
     get:
       tags:
-        - "Users"
-      summary: "Get user by ID"
+        - Books v2
+      summary: Get a book by id (v2)
       responses:
-        "200":
-          description: "User details"
+        '200':
+          description: Book found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "304":
-          description: "Not Modified (ETag matches)"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/Book'
+        '304':
+          description: Not modified (ETag matched)
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       tags:
-        - "Users"
-      summary: "Update a user"
+        - Books v2
+      summary: Update a book (v2)
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                name:
+                title:
                   type: string
+                author:
+                  type: string
+                quantity:
+                  type: integer
       responses:
-        "200":
-          description: "User updated"
+        '200':
+          description: Updated book
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags:
-        - "Users"
-      summary: "Delete a user"
+        - Books v2
+      summary: Delete a book (v2)
       responses:
-        "200":
-          description: "User deleted"
-          content:
-            application/json:
-              example:
-                message: "User with id 101 has been deleted."
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  
-  /api/v1/users/{user_id}/history:
-    parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: integer
-    get:
-      tags:
-        - "Users"
-      summary: "Get a user's borrow history"
-      responses:
-        "200":
-          description: "A list of borrow records"
+        '200':
+          description: Book deleted
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/BorrowRecord"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  # --- Library (Protected) ---
   /api/v1/borrow:
     post:
       tags:
-        - "Library"
-      summary: "Borrow a book"
+        - Library
+      summary: Borrow a book (decrement quantity)
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - user_id
+                - book_id
               properties:
                 user_id:
                   type: integer
                 book_id:
                   type: integer
       responses:
-        "200":
-          description: "Book borrowed successfully"
-        "400":
-          description: "Book is out of stock"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          description: "User or Book not found"
+        '200':
+          description: Borrow successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Missing fields or out of stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/return:
     post:
       tags:
-        - "Library"
-      summary: "Return a book"
+        - Library
+      summary: Return a book (increment quantity)
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - user_id
+                - book_id
               properties:
                 user_id:
                   type: integer
                 book_id:
                   type: integer
       responses:
-        "200":
-          description: "Book returned successfully"
-        "400":
-          description: "No active borrow record found"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        '200':
+          description: Return successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: No active borrow record or missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api/v1/borrow/history:
     get:
       tags:
-        - "Library"
-      summary: "Get global borrow history"
-      description: "Gets the borrow history for all users."
+        - Library
+      summary: Get borrow history (v1)
       responses:
-        "200":
-          description: "A list of all borrow records"
+        '200':
+          description: List of borrow records (book fields limited in v1)
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/BorrowRecord"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                  $ref: '#/components/schemas/BorrowRecord'
+
+  /api/v2/borrow:
+    post:
+      tags:
+        - Library v2
+      summary: Borrow a book (v2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - book_id
+              properties:
+                user_id:
+                  type: integer
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Borrow successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Missing fields or out of stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v2/return:
+    post:
+      tags:
+        - Library v2
+      summary: Return a book (v2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - book_id
+              properties:
+                user_id:
+                  type: integer
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Return successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: No active borrow record or missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v2/borrow/history:
+    get:
+      tags:
+        - Library v2
+      summary: Get borrow history (v2) with optional include=book
+      parameters:
+        - $ref: '#/components/parameters/IncludeParam'
+      responses:
+        '200':
+          description: List of borrow records (optionally with embedded book details)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BorrowRecord'
+
+security:
+  - bearerAuth: []

@@ -185,7 +185,7 @@ def get_user_borrow_history(user_id):
         records = rows_to_dicts(cursor)
 
     if len(records) == 0:
-        return create_response({"message": "No borrow history found for this user"}, 200)
+        return create_response({"message": "No borrow history found for this user"}, 201)
 
     # This helper MUST be updated. See notes below.
     records = [add_borrow_record_links(rec) for rec in records]
