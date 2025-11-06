@@ -13,6 +13,8 @@ def create_app(test_config=None):
         # Add other app-wide configs here
     )
 
+    app.config['SERVER_NAME'] = 'http:/152.69.214.109'
+
     if not app.config['SECRET_KEY']:
         raise RuntimeError("SECRET_KEY environment variable is not set.")
 
