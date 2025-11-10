@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: flask-library-api
-        image: xhatsu101/flask-library-api:v1.3.4 # The image you just built
+        image: xhatsu101/flask-library-api:v1.3.5 # The image you just built
         ports:
         - containerPort: 5000 # The port your Gunicorn server is listening on

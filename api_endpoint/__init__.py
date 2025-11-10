@@ -34,6 +34,7 @@ def create_app(test_config=None):
     # All routes in auth_v2.py will be prefixed with /api/v2
     from . import auth_v2
     app.register_blueprint(auth_v2.bp, url_prefix='/api/v2')
+
     # Users Blueprint (for /users/...)
     from . import users
     # All routes in users.py will be prefixed with /api/v1/users
@@ -41,6 +42,7 @@ def create_app(test_config=None):
     # All routes in users_v2.py will be prefixed with /api/v2/users
     from . import users_v2
     app.register_blueprint(users_v2.bp, url_prefix='/api/v2/users')
+    
     # Books Blueprint (for /books/...)
     from . import books
     # All routes in books.py will be prefixed with /api/v1/books

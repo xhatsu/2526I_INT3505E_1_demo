@@ -8,7 +8,7 @@ from .db import get_db
 from .helper import * # Assumes helper.py is now in the same directory
 
 # Create a Blueprint. 'auth' is the name, __name__ is the import name.
-bp = Blueprint('auth', __name__)
+bp = Blueprint('auth_v2', __name__)
 
 @bp.route('/register', methods=['POST'])
 def register():

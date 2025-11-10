@@ -188,6 +188,6 @@ def get_user_borrow_history(user_id):
         return create_response({"message": "No borrow history found for this user"}, 201)
 
     # This helper MUST be updated. See notes below.
-    records = [add_borrow_record_links(rec) for rec in records]
+    # records = [add_borrow_record_links(rec) for rec in records]
 
     return create_response(records, 200)
