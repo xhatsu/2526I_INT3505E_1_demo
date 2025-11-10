@@ -107,6 +107,6 @@ def get_borrow_history():
         records = rows_to_dicts(cursor)
     
     # This helper MUST be updated. See notes below.
-    records = [add_borrow_record_links(rec) for rec in records]
+    # records = [add_borrow_record_links(rec) for rec in records]
 
     return create_response(records, 200)
