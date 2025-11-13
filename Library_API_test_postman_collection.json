@@ -1,0 +1,481 @@
+{
+	"info": {
+		"_postman_id": "9bab57b8-3166-40dd-a518-f75f0a1b8647",
+		"name": "Library API test",
+		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49912133",
+		"_collection_link": "https://dungcuong0507-126577.postman.co/workspace/%C4%90%E1%BB%A9c-D%C5%A9ng-N's-Workspace~93be6ff3-204c-4612-81a9-e57c06954330/collection/49912133-9bab57b8-3166-40dd-a518-f75f0a1b8647?action=share&source=collection_link&creator=49912133"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\":\"testuser25\",\r\n    \"email\":\"testusermail25@gm.co\",\r\n    \"password\":\"123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/register",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"register"
+					]
+				},
+				"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+			},
+			"response": [
+				{
+					"name": "Register",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"testuser13\",\r\n    \"email\":\"testusermail13@gm.co\",\r\n    \"password\":\"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://152.69.214.109/api/v1/register",
+							"protocol": "http",
+							"host": [
+								"152",
+								"69",
+								"214",
+								"109"
+							],
+							"path": [
+								"api",
+								"v1",
+								"register"
+							]
+						}
+					},
+					"status": "CREATED",
+					"code": 201,
+					"_postman_previewlanguage": null,
+					"header": [
+						{
+							"key": "Server",
+							"value": "gunicorn"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 12 Nov 2025 13:53:52 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"message\": \"User registered successfully\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\":\"testusermail11@gm.co\",\n    \"password\":\"123456\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/login",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"login"
+					]
+				},
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": [
+				{
+					"name": "Login",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\":\"testusermail11@gm.co\",\n    \"password\":\"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://152.69.214.109/api/v1/login",
+							"protocol": "http",
+							"host": [
+								"152",
+								"69",
+								"214",
+								"109"
+							],
+							"path": [
+								"api",
+								"v1",
+								"login"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": null,
+					"header": [
+						{
+							"key": "Server",
+							"value": "gunicorn"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 12 Nov 2025 13:56:50 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "close"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDIyMTAsImlhdCI6MTc2Mjk1NTgxMCwic3ViIjoiMjIxIn0.tUlvLR3eE2TOImAFpS0k6tOzOCou2JmzwTdDokMRwyg\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Get all books",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/books",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"books"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/users",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all borroww hisotry",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://152.69.214.109/api/v2/borrow/history",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v2",
+						"borrow",
+						"history"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get user borrow history",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/users/2/history",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"2",
+						"history"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add a book",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"title\":\"The Great Gatsby\",\"author\":\"F. Scott Fitzgerald\",\"quantity\":5}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/books",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"books"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get book by id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/books/161",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"books",
+						"161"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update book with id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjMwNDA3NjAsImlhdCI6MTc2Mjk1NDM2MCwic3ViIjoiMjIxIn0.St2aj0cyLyraohPF4gp5chW10KW8GC-IO4nbvFqrVOM",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"title\":\"The Great Gatsby - Updated\",\"author\":\"F. Scott Fitzgerald\",\"quantity\":10}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://152.69.214.109/api/v1/books/161",
+					"protocol": "http",
+					"host": [
+						"152",
+						"69",
+						"214",
+						"109"
+					],
+					"path": [
+						"api",
+						"v1",
+						"books",
+						"161"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
