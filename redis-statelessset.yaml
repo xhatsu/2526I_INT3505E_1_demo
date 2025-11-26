@@ -1,0 +1,52 @@
+# redis-stateless.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cache
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "256Mi" # Set memory limit for cache
+            cpu: "200m"
+        # 1. Use an emptyDir volume for any temporary storage
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        # 2. Command to explicitly disable RDB and AOF persistence
+        command: ["redis-server"]
+        args: ["--appendonly", "no", "--save", ""] # Disables persistence completely
+      volumes:
+      # 3. Define the emptyDir volume. Data in this volume is lost when the Pod is removed.
+      - name: redis-data
+        emptyDir: {}
