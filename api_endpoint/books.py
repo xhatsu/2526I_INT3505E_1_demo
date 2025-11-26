@@ -6,10 +6,12 @@ from flask import Blueprint, request, Response, url_for
 from math import ceil
 from .db import get_db
 from .helper import * # Assumes helper.py is now in the same directory
+from .logger import api_logger
 
 bp = Blueprint('books', __name__)
 
 @bp.route('', methods=['GET'])
+@log_request
 def get_all_books():
     """Fetches a paginated list of all books from the library."""
     try:
@@ -63,6 +65,7 @@ def get_all_books():
 
 
 @bp.route('/<int:book_id>', methods=['GET'])
+@log_request
 def get_book_by_id(book_id):
     """Fetches a single book by its ID."""
     db = get_db()
@@ -86,6 +89,7 @@ def get_book_by_id(book_id):
 
 
 @bp.route('', methods=['POST'])
+@log_request
 def add_book():
     """Adds a new book to the library."""
     # ... (code for add_book is identical, no changes needed)
@@ -117,6 +121,7 @@ def add_book():
 
 
 @bp.route('/<int:book_id>', methods=['PUT'])
+@log_request
 def update_book(book_id):
     """Updates an existing book's details."""
     # ... (code for update_book is identical, no changes needed)
@@ -150,6 +155,7 @@ def update_book(book_id):
 
 
 @bp.route('/<int:book_id>', methods=['DELETE'])
+@log_request
 def delete_book(book_id):
     """Deletes a book from the library."""
     # ... (code for delete_book is identical, no changes needed)

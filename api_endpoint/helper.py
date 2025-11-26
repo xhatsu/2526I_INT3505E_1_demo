@@ -1,4 +1,6 @@
-from flask import jsonify, make_response, url_for
+from flask import jsonify, make_response, url_for, request
+from .logger import api_logger
+import functools
 
 # --- Helper Function for JSON Responses ---
 def create_response(data, status_code, headers=None):
@@ -78,3 +80,25 @@ def add_borrow_record_links(record):
             'schema': {'user_id': 'integer', 'book_id': 'integer'}
         }
     return record
+
+
+# --- Logging Decorator ---
+def log_request(f):
+    """Decorator to log request and response details."""
+    @functools.wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_logger.info(
+            f"[{request.method}] {request.path} - IP: {request.remote_addr} - Args: {request.args}"
+        )
+        try:
+            result = f(*args, **kwargs)
+            if isinstance(result, tuple):
+                status_code = result[1]
+            else:
+                status_code = 200
+            api_logger.info(f"Response Status: {status_code}")
+            return result
+        except Exception as e:
+            api_logger.error(f"Error in {f.__name__}: {str(e)}", exc_info=True)
+            raise
+    return decorated_function

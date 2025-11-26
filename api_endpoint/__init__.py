@@ -2,6 +2,7 @@
 import os
 from flask import Flask
 from .db import get_db
+from .logger import api_logger, rate_limit_logger
 
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
@@ -20,6 +21,40 @@ def create_app(test_config=None):
 
     if test_config:
         app.config.from_mapping(test_config)
+    
+    # --- Initialize Rate Limiter with Redis ---
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    from redis import Redis
+    
+    redis_host = os.environ.get('REDIS_HOST', 'localhost')
+    redis_port = int(os.environ.get('REDIS_PORT', 6379))
+    redis_db = int(os.environ.get('REDIS_DB', 0))
+    
+    try:
+        redis_client = Redis(
+            host=redis_host,
+            port=redis_port,
+            db=redis_db,
+            decode_responses=True,
+            socket_connect_timeout=5
+        )
+        # Test connection
+        redis_client.ping()
+        api_logger.info(f"Connected to Redis at {redis_host}:{redis_port}")
+    except Exception as e:
+        api_logger.error(f"Failed to connect to Redis: {e}")
+        redis_client = None
+    
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        storage_uri=f"redis://{redis_host}:{redis_port}/{redis_db}" if redis_client else None,
+        default_limits=["200 per day", "50 per hour"]
+    )
+    
+    # Store limiter in app context
+    app.limiter = limiter
     
     # --- Initialize Database ---
     from . import db
@@ -63,6 +98,7 @@ def create_app(test_config=None):
     def health_check():
         """A simple health check endpoint."""
         db = get_db()
+        api_logger.info("Health check called")
         return {"status": "ok"}, 200
 
     return app
