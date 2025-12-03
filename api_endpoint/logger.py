@@ -34,7 +34,7 @@ def setup_logging():
     log_file = os.path.join(log_dir, 'app.log')
     file_handler = logging.handlers.RotatingFileHandler(
         log_file,
-        maxBytes=10485760,  # 10MB
+        maxBytes=10485760,
         backupCount=10
     )
     file_handler.setLevel(logging.DEBUG)
@@ -45,7 +45,7 @@ def setup_logging():
     rate_limit_file = os.path.join(log_dir, 'ratelimit.log')
     rate_limit_handler = logging.handlers.RotatingFileHandler(
         rate_limit_file,
-        maxBytes=5242880,  # 5MB
+        maxBytes=5242880,
         backupCount=5
     )
     rate_limit_handler.setLevel(logging.WARNING)

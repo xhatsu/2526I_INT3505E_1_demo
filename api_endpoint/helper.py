@@ -1,5 +1,6 @@
 from flask import jsonify, make_response, url_for, request
 from .logger import api_logger
+from .metrics import record_error
 import functools
 
 # --- Helper Function for JSON Responses ---
@@ -100,5 +101,7 @@ def log_request(f):
             return result
         except Exception as e:
             api_logger.error(f"Error in {f.__name__}: {str(e)}", exc_info=True)
+            record_error(type(e).__name__)
             raise
+    return decorated_function
     return decorated_function

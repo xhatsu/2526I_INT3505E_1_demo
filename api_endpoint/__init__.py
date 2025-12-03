@@ -22,10 +22,33 @@ def create_app(test_config=None):
     if test_config:
         app.config.from_mapping(test_config)
     
+    # --- Initialize Prometheus Metrics ---
+    from .metrics import REGISTRY, record_request_start, record_request_end
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    
+    @app.before_request
+    def before_request():
+        """Record metrics before request processing."""
+        endpoint = request.endpoint or 'unknown'
+        record_request_start(endpoint)
+    
+    @app.after_request
+    def after_request(response):
+        """Record metrics after request processing."""
+        endpoint = request.endpoint or 'unknown'
+        record_request_end(response.status_code, endpoint)
+        return response
+    
+    @app.route('/metrics')
+    def metrics():
+        """Prometheus metrics endpoint."""
+        return generate_latest(REGISTRY), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+    
     # --- Initialize Rate Limiter with Redis ---
     from flask_limiter import Limiter
     from flask_limiter.util import get_remote_address
     from redis import Redis
+    from flask import request
     
     redis_host = os.environ.get('REDIS_HOST', 'localhost')
     redis_port = int(os.environ.get('REDIS_PORT', 6379))

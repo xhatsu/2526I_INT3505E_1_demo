@@ -1,0 +1,49 @@
+# 1. Create a Headless Service for stable network identities
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  labels:
+    app: redis
+spec:
+  ports:
+  - port: 6379
+    name: web
+  clusterIP: None # Makes it a Headless Service
+  selector:
+    app: redis
+---
+# 2. Create the StatefulSet for persistence
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  serviceName: "redis-service"
+  replicas: 1 # For a single master, or more for a cluster/master-replica setup
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest # Use the official Docker image
+        args: ["--appendonly", "yes"] # Enable AOF persistence
+        ports:
+        - containerPort: 6379
+          name: redis-port
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data # Default persistence directory for Redis
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi # Request 1 Gigabyte of storage

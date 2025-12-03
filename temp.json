@@ -1,0 +1,240 @@
+{
+    "current_page": 1,
+    "data": [
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/1",
+                    "method": "GET"
+                }
+            },
+            "author": "J.R.R. Tolkien",
+            "id": 1,
+            "quantity": 5,
+            "title": "The Hobbit"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/2",
+                    "method": "GET"
+                }
+            },
+            "author": "George Orwell",
+            "id": 2,
+            "quantity": 3,
+            "title": "1984"
+        },
+        {
+            "_links": {
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/3",
+                    "method": "GET"
+                }
+            },
+            "author": "Frank Herbert",
+            "id": 3,
+            "quantity": 0,
+            "title": "Dune"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/4",
+                    "method": "GET"
+                }
+            },
+            "author": "Douglas Adams",
+            "id": 4,
+            "quantity": 10,
+            "title": "The Hitchhiker's Guide to the Galaxy"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/5",
+                    "method": "GET"
+                }
+            },
+            "author": "Douglas Adams",
+            "id": 5,
+            "quantity": 5,
+            "title": "The Hitchhikers Guide to the Galaxy"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/6",
+                    "method": "GET"
+                }
+            },
+            "author": "George Orwell",
+            "id": 6,
+            "quantity": 1,
+            "title": "1984"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/7",
+                    "method": "GET"
+                }
+            },
+            "author": "Douglas Adams",
+            "id": 7,
+            "quantity": 5,
+            "title": "The Hitchhikers Guide to the Galaxy"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/8",
+                    "method": "GET"
+                }
+            },
+            "author": "George Orwell",
+            "id": 8,
+            "quantity": 1,
+            "title": "1984"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/9",
+                    "method": "GET"
+                }
+            },
+            "author": "Douglas Adams",
+            "id": 9,
+            "quantity": 5,
+            "title": "The Hitchhikers Guide to the Galaxy"
+        },
+        {
+            "_links": {
+                "borrow": {
+                    "href": "http://127.0.0.1:5000/borrow",
+                    "method": "POST",
+                    "schema": {
+                        "book_id": "integer",
+                        "user_id": "integer"
+                    }
+                },
+                "collection": {
+                    "href": "http://127.0.0.1:5000/books",
+                    "method": "GET"
+                },
+                "self": {
+                    "href": "http://127.0.0.1:5000/books/10",
+                    "method": "GET"
+                }
+            },
+            "author": "George Orwell",
+            "id": 10,
+            "quantity": 1,
+            "title": "1984"
+        }
+    ],
+    "next_page_url": "http://127.0.0.1:5000/books?page=2&limit=10",
+    "total_items": 22,
+    "total_pages": 3
+}

@@ -6,3 +6,4 @@ test.sh
 #deployment.yml
 #service.yml
 #Dockerfile
+/__pycache__

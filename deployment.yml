@@ -16,4 +16,19 @@ spec:
       - name: flask-library-api
         image: xhatsu101/flask-library-api:v1.4 # The image you just built
         ports:
-        - containerPort: 5000 # The port your Gunicorn server is listening on
+        - name: http
+          containerPort: 5000 # The port your Gunicorn server is listening on
+        - name: metrics
+          containerPort: 5000 # Prometheus metrics on same port, different path (/metrics)
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
