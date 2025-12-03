@@ -20,6 +20,7 @@ if not FORWARD_URL or not SECRET_KEY:
 # Define the exact paths that should bypass JWT validation.
 # The 'path' variable from Flask will not include a leading slash.
 PUBLIC_PATHS = [
+    'metrics',            # Prometheus metrics endpoint
     'health',               # Your main app's health check
     'api/v1/register',      # The v1 register route
     'api/v1/login'          # The v1 login route

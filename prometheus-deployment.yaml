@@ -55,7 +55,8 @@ spec:
   - name: web
     port: 9090
     targetPort: 9090
-  type: LoadBalancer
+    nodePort: 30090
+  type: NodePort
 ---
 apiVersion: v1
 kind: ServiceAccount

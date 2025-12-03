@@ -39,11 +39,6 @@ def create_app(test_config=None):
         record_request_end(response.status_code, endpoint)
         return response
     
-    @app.route('/metrics')
-    def metrics():
-        """Prometheus metrics endpoint."""
-        return generate_latest(REGISTRY), 200, {'Content-Type': CONTENT_TYPE_LATEST}
-    
     # --- Initialize Rate Limiter with Redis ---
     from flask_limiter import Limiter
     from flask_limiter.util import get_remote_address
@@ -78,6 +73,13 @@ def create_app(test_config=None):
     
     # Store limiter in app context
     app.limiter = limiter
+    
+    # Define metrics endpoint with rate limit exemption
+    @app.route('/metrics')
+    @limiter.exempt
+    def metrics():
+        """Prometheus metrics endpoint."""
+        return generate_latest(REGISTRY), 200, {'Content-Type': CONTENT_TYPE_LATEST}
     
     # --- Initialize Database ---
     from . import db
@@ -118,10 +120,10 @@ def create_app(test_config=None):
     app.register_blueprint(library_v2.bp, url_prefix='/api/v2')
 
     @app.route('/health')
+    @limiter.exempt
     def health_check():
         """A simple health check endpoint."""
         db = get_db()
         api_logger.info("Health check called")
         return {"status": "ok"}, 200
-
     return app
