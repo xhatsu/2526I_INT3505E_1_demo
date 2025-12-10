@@ -74,6 +74,11 @@ def create_app(test_config=None):
     # Store limiter in app context
     app.limiter = limiter
     
+    # --- Initialize Circuit Breaker ---
+    from .circuit_breaker import configure_breaker_listeners, get_breaker_status
+    configure_breaker_listeners()
+    api_logger.info("Circuit breaker initialized")
+    
     # Define metrics endpoint with rate limit exemption
     @app.route('/metrics')
     @limiter.exempt
@@ -126,4 +131,14 @@ def create_app(test_config=None):
         db = get_db()
         api_logger.info("Health check called")
         return {"status": "ok"}, 200
+    
+    @app.route('/status')
+    @limiter.exempt
+    def status():
+        """Get system status including circuit breaker states."""
+        return {
+            "status": "ok",
+            "circuit_breakers": get_breaker_status()
+        }, 200
+    
     return app

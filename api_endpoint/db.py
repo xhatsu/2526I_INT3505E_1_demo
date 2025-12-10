@@ -2,12 +2,18 @@
 import os
 import oracledb
 from flask import g, current_app
+from .circuit_breaker import db_breaker
+from .logger import api_logger
 
 def get_db():
-    """Get a pooled connection for the current request."""
+    """Get a pooled connection for the current request with circuit breaker protection."""
     if 'db' not in g:
-        # Get the pool from the application context
-        g.db = current_app.pool.acquire()
+        try:
+            # Use circuit breaker to protect database connection
+            g.db = db_breaker.call(current_app.pool.acquire)
+        except Exception as e:
+            api_logger.error(f"Failed to acquire database connection: {str(e)}")
+            raise
     return g.db
 
 
@@ -15,7 +21,10 @@ def close_db(e=None):
     """Release the connection back to the pool after each request."""
     db = g.pop('db', None)
     if db is not None:
-        db.close() # returns to pool, not truly closed
+        try:
+            db.close()  # returns to pool, not truly closed
+        except Exception as ex:
+            api_logger.error(f"Error closing database connection: {str(ex)}")
 
 
 def init_app(app):
@@ -39,9 +48,9 @@ def init_app(app):
         )
         # Attach the pool to the app object
         app.pool = pool
-        print("Database connection pool created successfully.")
+        api_logger.info("Database connection pool created successfully.")
     except oracledb.Error as e:
-        print("Error creating connection pool:", e)
+        api_logger.error(f"Error creating connection pool: {e}")
         exit(1)
 
     # Register the close_db function to be called on app context teardown

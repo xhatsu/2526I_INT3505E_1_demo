@@ -72,6 +72,21 @@ active_requests = Gauge(
     registry=REGISTRY
 )
 
+# Circuit breaker metrics
+circuit_breaker_state = Gauge(
+    'flask_circuit_breaker_state',
+    'Circuit breaker state (0=closed, 1=open, 2=half_open)',
+    ['breaker_name'],
+    registry=REGISTRY
+)
+
+circuit_breaker_failures = Gauge(
+    'flask_circuit_breaker_failures',
+    'Number of failures in circuit breaker',
+    ['breaker_name'],
+    registry=REGISTRY
+)
+
 
 def record_request_start(endpoint):
     """Record the start of a request."""
@@ -121,3 +136,15 @@ def record_error(error_type):
 def record_rate_limit(endpoint):
     """Record a rate limit exceeded event."""
     rate_limit_exceeded.labels(endpoint=endpoint).inc()
+
+
+def update_circuit_breaker_metrics(breaker_name, state, failures):
+    """Update circuit breaker metrics."""
+    state_value = 0  # closed
+    if state == 'open':
+        state_value = 1
+    elif state == 'half_open':
+        state_value = 2
+    
+    circuit_breaker_state.labels(breaker_name=breaker_name).set(state_value)
+    circuit_breaker_failures.labels(breaker_name=breaker_name).set(failures)
